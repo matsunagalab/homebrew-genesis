@@ -2,7 +2,6 @@ class Genesis < Formula
   desc "GENeralized-Ensemble SImulation System for molecular dynamics"
   homepage "https://www.r-ccs.riken.jp/labs/cbrt/"
   url "https://github.com/genesis-release-r-ccs/genesis/archive/refs/tags/v2.1.6.1.tar.gz"
-  version "2.1.6.1"
   sha256 "fdc0e889590f198e2261105901c27718268a18a1cd32300e2232b457a7ba6761"
   license "LGPL-3.0-or-later"
 
@@ -59,8 +58,8 @@ class Genesis < Formula
     # "enable_qsimulate=yes" is parsed as action-if-given instead of
     # action-if-not-given, so passing --disable still sets it to yes.
     inreplace "configure.ac",
-              'enable QSimulate integration.])]',
-              'enable QSimulate integration.])], '
+              "enable QSimulate integration.])]",
+              "enable QSimulate integration.])], "
 
     # Generate configure (not included in the tarball)
     system "autoreconf", "-fi"
