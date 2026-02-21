@@ -76,14 +76,13 @@ class Genesis < Formula
     system "make", "-j#{ENV.make_jobs}"
     system "make", "install"
 
-    # Install regression test data for `brew test` (~10 MB)
+    # Install regression test data (~200 MB)
     # test.py uses relative paths to param/ and build/, so preserve directory structure.
     rt = pkgshare/"regression_test"
     rt.install "tests/regression_test/test.py"
     rt.install "tests/regression_test/genesis.py"
-    (rt/"param").install "tests/regression_test/param/par_all27_prot_lipid.prm"
-    (rt/"param").install "tests/regression_test/param/top_all27_prot_lipid.rtf"
-    (rt/"build").install "tests/regression_test/build/jac_param27"
+    rt.install "tests/regression_test/param"
+    rt.install "tests/regression_test/build"
     rt.install "tests/regression_test/test_spdyn"
     rt.install "tests/regression_test/test_atdyn"
   end
