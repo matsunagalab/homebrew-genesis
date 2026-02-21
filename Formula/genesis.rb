@@ -44,6 +44,24 @@ class Genesis < Formula
     # Use OpenBLAS for LAPACK/BLAS
     ENV["LAPACK_LIBS"] = "-L#{Formula["openblas"].opt_lib} -lopenblas"
 
+    # Use GNU cpp for Fortran preprocessing. The Homebrew shim's cpp is
+    # clang-based and doesn't support the `cpp input output` positional
+    # syntax that GENESIS Makefiles use.
+    ENV["FPP"] = "#{Formula["gcc"].opt_bin}/cpp-#{gcc_major}"
+
+    # configure.ac only sets PPFLAGS when FPP is exactly "cpp" (not a path).
+    # -traditional-cpp prevents // in Fortran strings from being treated as
+    # C++ line comments.
+    ENV["PPFLAGS"] = "-traditional-cpp -traditional"
+
+    # Fix missing comma in AC_ARG_ENABLE(qsimulate) in configure.ac.
+    # Without this fix, --disable-qsimulate is silently ignored because
+    # "enable_qsimulate=yes" is parsed as action-if-given instead of
+    # action-if-not-given, so passing --disable still sets it to yes.
+    inreplace "configure.ac",
+              'enable QSimulate integration.])]',
+              'enable QSimulate integration.])], '
+
     # Generate configure (not included in the tarball)
     system "autoreconf", "-fi"
 
@@ -93,7 +111,13 @@ class Genesis < Formula
 
   test do
     ENV["OMP_NUM_THREADS"] = "1"
-    cd pkgshare/"regression_test" do
+
+    # Copy regression test data to a writable temp directory.
+    # test.py writes output files (test, error) in the test case directory,
+    # but the installed pkgshare is read-only.
+    cp_r pkgshare/"regression_test", testpath/"regression_test"
+
+    cd testpath/"regression_test" do
       system "python3", "test.py",
              "mpirun --oversubscribe -np 1 #{bin}/atdyn",
              "test_atdyn/jac_param27/CUTOFF"
