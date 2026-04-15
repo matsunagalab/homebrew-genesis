@@ -64,15 +64,25 @@ class Genesis < Formula
     # Generate configure (not included in the tarball)
     system "autoreconf", "-fi"
 
-    args = %W[
+    common_args = %W[
       --prefix=#{prefix}
       --enable-mpi
       --enable-openmp
-      --enable-double
       --disable-qsimulate
     ]
 
-    system "./configure", *args
+    # Build in two passes: double precision first, then mixed precision.
+    # --enable-double installs all binaries (atdyn, spdyn, analysis tools).
+    # --enable-mixed installs only spdyn, overwriting the double-precision
+    # spdyn with the mixed-precision build (the recommended production
+    # configuration for SPDYN).
+    system "./configure", *common_args, "--enable-double"
+    system "make", "-j#{ENV.make_jobs}"
+    system "make", "install"
+
+    system "make", "clean"
+
+    system "./configure", *common_args, "--enable-mixed"
     system "make", "-j#{ENV.make_jobs}"
     system "make", "install"
 
@@ -89,7 +99,16 @@ class Genesis < Formula
 
   def caveats
     <<~EOS
-      GENESIS has been installed with MPI support (Open MPI).
+      Build configuration:
+        - Compiler: GNU gcc/gfortran (Homebrew gcc formula, not Apple clang)
+        - MPI: Open MPI (mpicc/mpif90 wrappers forced to GNU compilers
+          via OMPI_CC/OMPI_FC so that OpenMP works)
+        - BLAS/LAPACK: OpenBLAS
+
+      Precision:
+        - spdyn: mixed precision (recommended for production MD runs)
+        - atdyn and analysis tools: double precision
+
       To run parallel simulations:
         mpirun -np <nprocs> spdyn <input_file>
 
